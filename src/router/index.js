@@ -1,6 +1,6 @@
-// src/router/index.js
-
 import { createRouter, createWebHistory } from "vue-router";
+
+import { supabase } from "../lib/supabase";
 
 // Layouts
 import PublicLayout from "../layouts/PublicLayout.vue";
@@ -27,118 +27,165 @@ import Settings from "../views/dashboard/Settings.vue";
 import Profile from "../views/dashboard/Profile.vue";
 
 const routes = [
-  // =========================
-  // PUBLIC
-  // =========================
+  /* =====================================================
+     PUBLIC
+  ===================================================== */
 
   {
     path: "/",
+
     component: PublicLayout,
 
     children: [
       {
         path: "",
+
         name: "home",
+
         component: Home,
       },
     ],
   },
 
-  // =========================
-  // AUTH
-  // =========================
+  /* =====================================================
+     AUTH
+  ===================================================== */
 
   {
     path: "/",
+
     component: AuthLayout,
 
     children: [
       {
         path: "login",
+
         name: "login",
+
         component: Login,
+
+        meta: {
+          guestOnly: true,
+        },
       },
 
       {
         path: "register",
+
         name: "register",
+
         component: Register,
+
+        meta: {
+          guestOnly: true,
+        },
       },
 
       {
         path: "forgot-password",
+
         name: "forgot-password",
+
         component: ForgotPassword,
+
+        meta: {
+          guestOnly: true,
+        },
       },
 
       {
         path: "auth/callback",
+
         name: "AuthCallback",
+
         component: AuthCallback,
       },
     ],
   },
 
-  // =========================
-  // CUSTOMER APP
-  // =========================
+  /* =====================================================
+     CUSTOMER APP
+  ===================================================== */
 
   {
     path: "/app",
+
     component: DashboardLayout,
+
+    meta: {
+      requiresAuth: true,
+    },
 
     children: [
       {
         path: "",
+
         name: "dashboard",
+
         component: Dashboard,
       },
 
       {
         path: "marketplace",
+
         name: "marketplace",
+
         component: Marketplace,
       },
 
       {
         path: "checkout",
+
         name: "checkout",
+
         component: Checkout,
       },
 
       {
         path: "orders",
+
         name: "orders",
+
         component: Orders,
       },
 
       {
         path: "subscriptions",
+
         name: "subscriptions",
+
         component: Subscriptions,
       },
 
       {
         path: "notifications",
+
         name: "notifications",
+
         component: Notifications,
       },
 
       {
         path: "settings",
+
         name: "settings",
+
         component: Settings,
       },
 
       {
-        path: "/order-success",
+        path: "order-success",
+
         name: "OrderSuccess",
+
         component: () => import("../views/dashboard/OrderSuccess.vue"),
       },
 
       {
         path: "profile",
+
         name: "profile",
+
         component: Profile,
       },
     ],
@@ -155,6 +202,48 @@ const router = createRouter({
       top: 0,
     };
   },
+});
+
+/* =====================================================
+   ROUTE GUARD
+===================================================== */
+
+router.beforeEach(async (to) => {
+  /*
+   * Always get the current Supabase session.
+   */
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  /* =================================================
+       AUTHENTICATED USER
+       Trying to access login/register
+    ================================================= */
+
+  if (to.meta.guestOnly && session) {
+    return {
+      path: "/app",
+    };
+  }
+
+  /* =================================================
+       UNAUTHENTICATED USER
+       Trying to access dashboard
+    ================================================= */
+
+  if (to.meta.requiresAuth && !session) {
+    return {
+      path: "/login",
+
+      query: {
+        redirect: to.fullPath,
+      },
+    };
+  }
+
+  return true;
 });
 
 export default router;

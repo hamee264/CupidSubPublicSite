@@ -827,31 +827,10 @@ async function continueWithGoogle() {
 
     loading.value = true;
 
+
     try {
 
-        const {
-            error,
-        } = await supabase.auth.signInWithOAuth({
-
-            provider:
-                "google",
-
-            options: {
-
-                redirectTo:
-                    window.location.origin,
-
-            },
-
-        });
-
-
-        if (error) {
-
-            throw error;
-
-        }
-
+        await auth.loginWithGoogle();
 
     } catch (error) {
 
@@ -860,11 +839,9 @@ async function continueWithGoogle() {
             error
         );
 
-
         errorMessage.value =
             error?.message ||
             "Unable to continue with Google.";
-
 
         loading.value = false;
 

@@ -1,183 +1,126 @@
 <template>
 
-    <div class="callback-container">
+    <AuthLayout>
 
-        <div class="callback-card">
+        <div class="callback-page">
 
-            <div class="loader"></div>
+            <div class="callback-icon">
 
-            <h2>
-                Signing you in...
-            </h2>
+                <i class="bi bi-shield-check"></i>
+
+            </div>
+
+            <h1>
+                Signing you in
+            </h1>
 
             <p>
-                Please wait while we prepare your account.
+                Please wait while we finish setting up your account.
             </p>
+
+            <div class="spinner"></div>
 
         </div>
 
-    </div>
+    </AuthLayout>
 
 </template>
 
 
 <script setup>
 
-import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import {
+    onMounted,
+} from "vue";
 
-import { supabase } from "../../lib/supabase.js";
-import { useAuthStore } from "../../stores/authStore";
+import {
+    useRouter,
+} from "vue-router";
+
+import {
+    supabase,
+} from "../../lib/supabase.js";
+
+import {
+    useAuthStore,
+} from "../../stores/authStore";
 
 
 const router = useRouter();
+
 const auth = useAuthStore();
 
 
-async function handleCallback() {
+onMounted(async () => {
 
     try {
 
         /*
-         * Get the authenticated Supabase user
+         * Get the session created by Supabase OAuth.
          */
 
         const {
-            data: { user },
-            error: userError,
-        } = await supabase.auth.getUser();
+            data,
+            error,
+        } =
+            await supabase.auth.getSession();
 
 
-        if (userError) {
+        if (error) {
 
-            throw userError;
+            throw error;
+
+        }
+
+
+        const session =
+            data?.session;
+
+
+        if (!session?.user) {
+
+            throw new Error(
+                "Unable to retrieve your account session."
+            );
 
         }
 
 
         /*
-         * No authenticated user
+         * Update Pinia.
          */
 
-        if (!user) {
+        auth.session =
+            session;
 
-            router.replace("/login");
-
-            return;
-
-        }
+        auth.user =
+            session.user;
 
 
         /*
-         * Store authenticated user
-         * in Pinia
+         * Redirect to customer dashboard.
          */
 
-        auth.user = user;
+        await router.replace("/app");
 
 
-        /*
-         * Check whether the customer
-         * already exists.
-         */
-
-        const {
-            data: customer,
-            error: customerError,
-        } = await supabase
-
-            .from("customers")
-
-            .select("id")
-
-            .eq("id", user.id)
-
-            .maybeSingle();
-
-
-        if (customerError) {
-
-            throw customerError;
-
-        }
-
-
-        /*
-         * Create customer profile
-         * on first login.
-         *
-         * customer_code is NOT supplied here.
-         *
-         * PostgreSQL generates it through:
-         *
-         * customer_code_trigger
-         */
-
-        if (!customer) {
-
-            const {
-                error: insertError,
-            } = await supabase
-
-                .from("customers")
-
-                .insert({
-
-                    id: user.id,
-
-                    full_name:
-                        user.user_metadata?.full_name ||
-                        user.user_metadata?.name ||
-                        "",
-
-                    email:
-                        user.email || "",
-
-                    phone: "",
-
-                    total_orders: 0,
-
-                    total_spent: 0,
-
-                });
-
-
-            if (insertError) {
-
-                throw insertError;
-
-            }
-
-        }
-
-
-        /*
-         * Customer authentication is complete.
-         *
-         * Dashboard route is /app
-         */
-
-        router.replace("/app");
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "Authentication callback failed:",
             error
         );
 
-        router.replace("/login");
+        await router.replace({
+            path: "/login",
+
+            query: {
+                error:
+                    "google-auth-failed",
+            },
+        });
 
     }
-
-}
-
-
-onMounted(() => {
-
-    handleCallback();
 
 });
 
@@ -185,9 +128,28 @@ onMounted(() => {
 
 
 <style scoped>
-.callback-container {
+.callback-page {
 
-    min-height: 100vh;
+    min-height: 400px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+}
+
+
+.callback-icon {
+
+    width: 54px;
+
+    height: 54px;
 
     display: flex;
 
@@ -195,63 +157,56 @@ onMounted(() => {
 
     justify-content: center;
 
-    background: #f8fafc;
-
-    padding: 24px;
-
-}
-
-
-.callback-card {
-
-    width: 100%;
-
-    max-width: 420px;
-
-    text-align: center;
-
-}
-
-
-.loader {
-
-    width: 52px;
-
-    height: 52px;
-
-    margin: 0 auto 24px;
-
-    border: 4px solid #e5e7eb;
-
-    border-top-color: #2563eb;
+    margin-bottom: 20px;
 
     border-radius: 50%;
 
-    animation: spin 0.8s linear infinite;
+    background: #f3f4f6;
+
+    color: #111827;
+
+    font-size: 22px;
 
 }
 
 
-h2 {
+.callback-page h1 {
 
-    margin: 0 0 10px;
+    margin: 0 0 8px;
 
     color: #111827;
 
-    font-size: 24px;
+    font-size: 22px;
 
     font-weight: 700;
 
 }
 
 
-p {
+.callback-page p {
 
-    margin: 0;
+    margin: 0 0 22px;
 
     color: #6b7280;
 
-    font-size: 15px;
+    font-size: 13px;
+
+}
+
+
+.spinner {
+
+    width: 22px;
+
+    height: 22px;
+
+    border: 2px solid #e5e7eb;
+
+    border-top-color: #111827;
+
+    border-radius: 50%;
+
+    animation: spin .7s linear infinite;
 
 }
 

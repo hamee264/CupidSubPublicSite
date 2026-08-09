@@ -6,42 +6,63 @@ export const useAuthStore = defineStore("auth", {
     user: null,
     session: null,
     loading: true,
+    initialized: false,
   }),
 
   actions: {
     /* =====================================================
-           INITIALIZE AUTH
-        ===================================================== */
+       INITIALIZE AUTH
+    ===================================================== */
 
     async initialize() {
+      if (this.initialized) {
+        return;
+      }
+
       this.loading = true;
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-      this.session = session;
-      this.user = session?.user ?? null;
+        if (error) {
+          throw error;
+        }
 
-      /* =================================================
-               LISTEN FOR AUTH CHANGES
-            ================================================= */
-
-      supabase.auth.onAuthStateChange((event, session) => {
         this.session = session;
         this.user = session?.user ?? null;
-      });
 
-      this.loading = false;
+        /*
+         * Listen for future authentication changes.
+         */
+
+        supabase.auth.onAuthStateChange((event, session) => {
+          this.session = session;
+          this.user = session?.user ?? null;
+        });
+
+        this.initialized = true;
+      } catch (error) {
+        console.error("Auth initialization failed:", error);
+
+        this.session = null;
+        this.user = null;
+      } finally {
+        this.loading = false;
+      }
     },
 
     /* =====================================================
-           EMAIL LOGIN
-        ===================================================== */
+       EMAIL LOGIN
+    ===================================================== */
 
     async login(email, password) {
+      const normalizedEmail = email.trim().toLowerCase();
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password,
       });
 
@@ -56,46 +77,72 @@ export const useAuthStore = defineStore("auth", {
     },
 
     /* =====================================================
-           REGISTER
-        ===================================================== */
+       EMAIL REGISTER
+    ===================================================== */
 
-    async register(email, password) {
+    async register(email, password, metadata = {}) {
+      const normalizedEmail = email.trim().toLowerCase();
+
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
+
         password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      this.session = data.session;
-      this.user = data.user;
-
-      return data;
-    },
-
-    /* =====================================================
-           GOOGLE LOGIN
-        ===================================================== */
-
-    async loginWithGoogle() {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
 
         options: {
-          redirectTo: window.location.origin,
+          data: metadata,
         },
       });
 
       if (error) {
         throw error;
       }
+
+      this.session = data.session;
+      this.user = data.user;
+
+      return data;
     },
 
     /* =====================================================
-           LOGOUT
-        ===================================================== */
+       GOOGLE LOGIN
+    ===================================================== */
+
+    async loginWithGoogle() {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    },
+
+    /* =====================================================
+       GET CURRENT SESSION
+    ===================================================== */
+
+    async getSession() {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        throw error;
+      }
+
+      this.session = data.session;
+      this.user = data.session?.user ?? null;
+
+      return data.session;
+    },
+
+    /* =====================================================
+       LOGOUT
+    ===================================================== */
 
     async logout() {
       const { error } = await supabase.auth.signOut();

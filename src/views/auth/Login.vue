@@ -202,57 +202,82 @@
 
 <script setup>
 
-import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
-import { supabase } from "../../lib/supabase.js";
+import {
+    reactive,
+    ref,
+} from "vue";
 
-const router = useRouter();
+import {
+    useRouter,
+} from "vue-router";
+
+import {
+    useAuthStore,
+} from "../../stores/authStore";
+
+
+const router =
+    useRouter();
+
+const auth =
+    useAuthStore();
 
 
 /* ==========================================
    STATE
 ========================================== */
 
-const emailLoading = ref(false);
+const emailLoading =
+    ref(false);
 
-const googleLoading = ref(false);
+const googleLoading =
+    ref(false);
 
-const showPassword = ref(false);
+const showPassword =
+    ref(false);
 
-const formError = ref("");
+const formError =
+    ref("");
+
 
 
 /* ==========================================
    FORM
 ========================================== */
 
-const form = reactive({
+const form =
+    reactive({
 
-    email: "",
+        email: "",
 
-    password: ""
+        password: "",
 
-});
+    });
+
 
 
 /* ==========================================
    FIELD ERRORS
 ========================================== */
 
-const fieldErrors = reactive({
+const fieldErrors =
+    reactive({
 
-    email: "",
+        email: "",
 
-    password: ""
+        password: "",
 
-});
+    });
+
 
 
 /* ==========================================
-   COMPUTED LOADING
+   LOADING
 ========================================== */
 
-const loading = ref(false);
+const loading =
+    ref(false);
+
 
 
 /* ==========================================
@@ -262,6 +287,7 @@ const loading = ref(false);
 const validate = () => {
 
     fieldErrors.email = "";
+
     fieldErrors.password = "";
 
     let valid = true;
@@ -269,13 +295,20 @@ const validate = () => {
 
     if (!form.email) {
 
-        fieldErrors.email = "Email is required.";
+        fieldErrors.email =
+            "Email is required.";
 
         valid = false;
 
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    }
 
-        fieldErrors.email = "Please enter a valid email address.";
+    else if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            .test(form.email)
+    ) {
+
+        fieldErrors.email =
+            "Please enter a valid email address.";
 
         valid = false;
 
@@ -284,7 +317,8 @@ const validate = () => {
 
     if (!form.password) {
 
-        fieldErrors.password = "Password is required.";
+        fieldErrors.password =
+            "Password is required.";
 
         valid = false;
 
@@ -296,79 +330,80 @@ const validate = () => {
 };
 
 
+
 /* ==========================================
-   SIGN IN
+   EMAIL LOGIN
 ========================================== */
 
 const signIn = async () => {
 
     formError.value = "";
 
-    if (!validate()) return;
+    if (!validate()) {
+        return;
+    }
+
+
+    emailLoading.value = true;
+
+    loading.value = true;
 
 
     try {
 
-        emailLoading.value = true;
-        loading.value = true;
+        await auth.login(
+            form.email,
+            form.password
+        );
 
 
-        const { data, error } =
-            await supabase.auth.signInWithPassword({
-
-                email: form.email,
-
-                password: form.password
-
-            });
-
-
-        if (error) {
-
-            if (
-                error.message
-                    .toLowerCase()
-                    .includes("invalid login credentials")
-            ) {
-
-                formError.value =
-                    "Incorrect email or password.";
-
-            } else {
-
-                formError.value =
-                    error.message;
-
-            }
-
-            return;
-
-        }
-
-
-        if (!data?.session) {
-
-            formError.value =
-                "Login was successful, but no active session was returned.";
-
-            return;
-
-        }
-
-
-        /* ------------------------------------------
-           LOGIN SUCCESS
-        ------------------------------------------ */
-
-        router.push("/app");
+        await router.replace(
+            "/app"
+        );
 
 
     } catch (error) {
 
-        console.error("Login failed:", error);
+        console.error(
+            "Login failed:",
+            error
+        );
 
-        formError.value =
-            "Something went wrong while signing in. Please try again.";
+
+        const message =
+            error?.message
+                ?.toLowerCase() || "";
+
+
+        if (
+            message.includes(
+                "invalid login credentials"
+            )
+        ) {
+
+            formError.value =
+                "Incorrect email or password.";
+
+        }
+
+        else if (
+            message.includes(
+                "email not confirmed"
+            )
+        ) {
+
+            formError.value =
+                "Please confirm your email address before signing in.";
+
+        }
+
+        else {
+
+            formError.value =
+                error?.message ||
+                "Unable to sign in. Please try again.";
+
+        }
 
     } finally {
 
@@ -381,6 +416,7 @@ const signIn = async () => {
 };
 
 
+
 /* ==========================================
    GOOGLE LOGIN
 ========================================== */
@@ -389,30 +425,19 @@ const signInWithGoogle = async () => {
 
     formError.value = "";
 
+    googleLoading.value = true;
+
+    loading.value = true;
+
+
     try {
 
-        googleLoading.value = true;
-        loading.value = true;
+        await auth.loginWithGoogle();
 
-        const { error } =
-            await supabase.auth.signInWithOAuth({
-
-                provider: "google",
-
-                options: {
-
-                    redirectTo:
-                        window.location.origin
-
-                }
-
-            });
-
-        if (error) {
-
-            throw error;
-
-        }
+        /*
+         * Supabase redirects the browser
+         * to Google automatically.
+         */
 
     } catch (error) {
 
@@ -421,11 +446,13 @@ const signInWithGoogle = async () => {
             error
         );
 
+
         formError.value =
-            error.message ||
+            error?.message ||
             "Unable to continue with Google.";
 
         googleLoading.value = false;
+
         loading.value = false;
 
     }
@@ -433,8 +460,6 @@ const signInWithGoogle = async () => {
 };
 
 </script>
-
-
 <style scoped>
 /* ==========================================
    AUTH PAGE
