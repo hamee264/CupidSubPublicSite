@@ -173,8 +173,8 @@
                             <i class="bi bi-lock"></i>
 
                             <input v-model="form.password" :type="showPassword
-                                    ? 'text'
-                                    : 'password'
+                                ? 'text'
+                                : 'password'
                                 " placeholder="Create a password" autocomplete="new-password" required minlength="6">
 
                             <button type="button" class="password-toggle" @click="
@@ -183,8 +183,8 @@
                                 " aria-label="Toggle password visibility">
 
                                 <i :class="showPassword
-                                        ? 'bi bi-eye-slash'
-                                        : 'bi bi-eye'
+                                    ? 'bi bi-eye-slash'
+                                    : 'bi bi-eye'
                                     "></i>
 
                             </button>
@@ -206,8 +206,8 @@
                             <i class="bi bi-shield-lock"></i>
 
                             <input v-model="form.confirmPassword" :type="showConfirmPassword
-                                    ? 'text'
-                                    : 'password'
+                                ? 'text'
+                                : 'password'
                                 " placeholder="Confirm your password" autocomplete="new-password" required
                                 minlength="6">
 
@@ -217,8 +217,8 @@
                                 " aria-label="Toggle confirm password visibility">
 
                                 <i :class="showConfirmPassword
-                                        ? 'bi bi-eye-slash'
-                                        : 'bi bi-eye'
+                                    ? 'bi bi-eye-slash'
+                                    : 'bi bi-eye'
                                     "></i>
 
                             </button>
@@ -815,6 +815,9 @@ async function handleRegister() {
 /* =========================================================
    GOOGLE AUTHENTICATION
 ========================================================= */
+/* =========================================================
+   GOOGLE AUTHENTICATION
+========================================================= */
 
 async function continueWithGoogle() {
 
@@ -823,7 +826,6 @@ async function continueWithGoogle() {
     successMessage.value = "";
 
     loading.value = true;
-
 
     try {
 
@@ -837,7 +839,7 @@ async function continueWithGoogle() {
             options: {
 
                 redirectTo:
-                    `${window.location.origin}/auth/callback`,
+                    window.location.origin,
 
             },
 
@@ -869,7 +871,6 @@ async function continueWithGoogle() {
     }
 
 }
-
 </script>
 
 

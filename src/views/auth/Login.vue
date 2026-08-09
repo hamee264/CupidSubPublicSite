@@ -389,12 +389,10 @@ const signInWithGoogle = async () => {
 
     formError.value = "";
 
-
     try {
 
         googleLoading.value = true;
         loading.value = true;
-
 
         const { error } =
             await supabase.auth.signInWithOAuth({
@@ -404,19 +402,17 @@ const signInWithGoogle = async () => {
                 options: {
 
                     redirectTo:
-                        `${window.location.origin}/auth/callback`
+                        window.location.origin
 
                 }
 
             });
-
 
         if (error) {
 
             throw error;
 
         }
-
 
     } catch (error) {
 
@@ -430,7 +426,6 @@ const signInWithGoogle = async () => {
             "Unable to continue with Google.";
 
         googleLoading.value = false;
-
         loading.value = false;
 
     }
