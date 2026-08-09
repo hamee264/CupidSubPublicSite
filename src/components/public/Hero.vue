@@ -19,7 +19,7 @@
 
                 <p class="hero-text">
                     Enjoy Spotify Premium from just
-                    <strong>₦800</strong>
+                    <strong>₦600</strong>
                     — no international card required.
                     We also offer Netflix, Apple Music,
                     YouTube Premium, Crunchyroll and more
