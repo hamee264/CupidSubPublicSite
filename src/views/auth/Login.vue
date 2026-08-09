@@ -63,31 +63,7 @@
             </div>
 
 
-            <!-- Google Login -->
-
-            <button class="google-btn" type="button" @click="signInWithGoogle" :disabled="loading">
-
-                <img src="../../assets/google.svg" alt="Google">
-
-                <span>
-                    {{ googleLoading ? "Connecting..." : "Continue with Google" }}
-                </span>
-
-            </button>
-
-
-            <!-- Divider -->
-
-            <div class="divider">
-
-                <span></span>
-
-                <p>OR</p>
-
-                <span></span>
-
-            </div>
-
+           
 
             <!-- Login Form -->
 
