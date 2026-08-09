@@ -44,7 +44,7 @@
                 <h1>Welcome back 👋</h1>
 
                 <p>
-                    Continue with your Google account or sign in with your email.
+                     sign in with your email.
                 </p>
 
             </div>
