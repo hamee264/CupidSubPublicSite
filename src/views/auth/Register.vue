@@ -51,30 +51,7 @@
                 </div>
 
 
-                <!-- Google -->
-                <button type="button" class="google-button" @click="continueWithGoogle" :disabled="loading">
-
-                    <img src="/src/assets/google.svg" alt="Google" class="google-image">
-
-                    <span>
-                        Continue with Google
-                    </span>
-
-                </button>
-
-
-                <!-- Divider -->
-                <div class="divider">
-
-                    <span></span>
-
-                    <strong>
-                        OR
-                    </strong>
-
-                    <span></span>
-
-                </div>
+               
 
 
                 <!-- Error -->
